@@ -1,0 +1,26 @@
+{
+  "feature_columns": [
+    "run1",
+    "run2",
+    "run3",
+    "run4",
+    "run5",
+    "run6",
+    "run7",
+    "run8",
+    "ski",
+    "sled_push",
+    "sled_pull",
+    "burpees",
+    "row",
+    "farmers",
+    "lunges",
+    "wallballs"
+  ],
+  "classes": [
+    "Runner",
+    "Working Station Specialist"
+  ],
+  "test_accuracy": 0.913385808467865,
+  "test_loss": 0.22227787971496582
+}
