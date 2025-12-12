@@ -51,6 +51,15 @@ The model is a feedforward neural network built with TensorFlow and Keras. The a
 
 The model built to classify between Runner and Working Station Specialist achieved strong overall performance, with 89% accuracy on the test set.
 
+### Training Performance
+
+![Model Accuracy](assets/model_accuracy.png)
+![Model Loss](assets/model_loss.png)
+
+The accuracy chart shows the model's training progression, with test accuracy reaching ~94% by the final epoch. The loss chart demonstrates steady convergence, with test loss decreasing from ~0.49 to ~0.20.
+
+### Classification Metrics
+
 By class, the results show healthy balance:
 
 Runner: precision 0.93, recall 0.84, f1-score 0.88
@@ -58,6 +67,14 @@ Runner: precision 0.93, recall 0.84, f1-score 0.88
 Working Station Specialist: precision 0.86, recall 0.94, f1-score 0.90
 
 This shows the model is particularly effective at correctly identifying Working Station Specialists (high recall) while maintaining very good precision for Runners. Macro and weighted averages are consistent (0.89 in all cases), indicating stability and no major bias towards a single class.
+
+### Confusion Matrix
+
+![Confusion Matrix](assets/confusion_matrix.png)
+
+The confusion matrix above visualizes the model's predictions on the test set:
+- **True Runners correctly identified:** 54 out of 61 (recall: 0.84)
+- **True Working Station Specialists correctly identified:** 65 out of 66 (recall: 0.94)
 
 ## How to Run
 
