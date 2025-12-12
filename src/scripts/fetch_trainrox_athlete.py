@@ -43,23 +43,19 @@ def fetch_url(url: str) -> Optional[str]:
 
 
 def find_pro_men_ids(html: str) -> List[str]:
-    """Return list of result IDs for the EXACT division HYROX PRO MEN.
-
-    We scan per-line to ensure context proximity without full HTML parsing libs.
-    Lines mentioning "HYROX PRO DOUBLES MEN" or other variants are excluded.
-    """
+    """Return list of result IDs for the EXACT division HYROX PRO MEN."""
     ids: List[str] = []
     for line in html.splitlines():
         if "/results/" not in line:
             continue
-        # Require exact division label present and exclude doubles on the same line
+        
         has_exact = re.search(r"HYROX\s+PRO\s+MEN(?!\S)", line) is not None
         has_doubles = "HYROX PRO DOUBLES MEN" in line
         if not has_exact or has_doubles:
             continue
         for m in re.finditer(r"/results/(\d+)/", line):
             ids.append(m.group(1))
-    # De-duplicate preserving order
+    
     seen = set()
     ordered: List[str] = []
     for i in ids:
@@ -70,10 +66,10 @@ def find_pro_men_ids(html: str) -> List[str]:
 
 
 def fetch_splits(result_id: str) -> Optional[List[Dict]]:
-    api = f"https://www.trainrox.com/api/split-distributions/{result_id}"
-    s = fetch_url(api)
+    s = fetch_url(f"https://www.trainrox.com/api/split-distributions/{result_id}")
     if s is None:
         return None
+    
     try:
         return json.loads(s)
     except json.JSONDecodeError as e:
@@ -85,13 +81,11 @@ def to_csv_row(athlete_name: str, result_id: str, splits: List[Dict]) -> Dict[st
     """Convert split JSON to a CSV row dict matching the dataset schema."""
     row: Dict[str, Optional[float]] = {
         "athlete": athlete_name,
-        "gender": "M",  # TrainRox profiles here are male; adjust if needed
+        "gender": "M",
         "race": f"Event {result_id}",
         "source": "trainrox",
-        # specialty left as-is by caller (or filled after append)
     }
 
-    # Initialize all expected columns with None
     for col in [
         "run1","ski","run2","sled_push","run3","sled_pull","run4","burpees",
         "run5","row","run6","farmers","run7","lunges","run8","wallballs",
@@ -105,7 +99,6 @@ def to_csv_row(athlete_name: str, result_id: str, splits: List[Dict]) -> Dict[st
         if name in SPLIT_MAP and time is not None:
             row[SPLIT_MAP[name]] = time
 
-    # Totals (ignore Roxzone)
     run_cols = ["run1","run2","run3","run4","run5","run6","run7","run8"]
     work_cols = ["ski","sled_push","sled_pull","burpees","row","farmers","lunges","wallballs"]
 
@@ -122,14 +115,13 @@ def to_csv_row(athlete_name: str, result_id: str, splits: List[Dict]) -> Dict[st
 
 def append_rows(csv_path: Path, rows: List[Dict[str, Optional[float]]]) -> None:
     df = pd.read_csv(csv_path)
-    # Ensure we only add rows not already present (by race identifier)
+    
     existing = set(df["race"].astype(str).tolist())
     add_rows = [r for r in rows if str(r.get("race")) not in existing]
     if not add_rows:
         print("No new rows to append.")
         return
 
-    # Ensure all columns exist in the same order
     for r in add_rows:
         for col in df.columns:
             r.setdefault(col, None)
@@ -144,7 +136,6 @@ def main() -> None:
     parser.add_argument(
         "--input",
         default=str(INPUT_LIST_PATH),
-        help="CSV with columns url,athlete_name (default: data/athletes_to_fetch.csv)",
     )
     args = parser.parse_args()
 
@@ -158,7 +149,6 @@ def main() -> None:
         print("Input CSV must contain columns: url, athlete_name")
         return
 
-    # Load existing races to avoid redundant API calls and duplicate rows
     existing_races: Set[str] = set()
     try:
         existing_df = pd.read_csv(CSV_PATH)
@@ -184,14 +174,12 @@ def main() -> None:
         for rid in ids:
             race_id = f"Event {rid}"
             if race_id in existing_races:
-                # Skip calling the API if we already have this event in the CSV
                 continue
             splits = fetch_splits(rid)
             if splits is None:
                 continue
             athlete_rows.append(to_csv_row(athlete_name, rid, splits))
 
-        # Append rows for this athlete immediately after processing all their IDs
         if athlete_rows:
             append_rows(CSV_PATH, athlete_rows)
         else:
